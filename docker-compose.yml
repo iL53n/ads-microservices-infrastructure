@@ -6,28 +6,44 @@ services:
     container_name: rabbitmq
     hostname: node1
     ports:
-    - 5672:5672
-    - 15672:15672
+      - 5672:5672
+      - 15672:15672
     volumes:
-    - rabbitmq:/var/lib/rabbitmq
+      - rabbitmq:/var/lib/rabbitmq
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash-oss:7.8.0
+    container_name: logstash
+    depends_on:
+      - elasticsearch
+    ports:
+      - "5044:5044"
+      - "5000:5000"
+      - "9600:9600"
+    volumes:
+      - ./logstash/pipelines/log.conf:/usr/share/logstash/config/pipelines/log.conf:ro
+
   filebeat:
     image: docker.elastic.co/beats/filebeat-oss:7.8.0
     container_name: filebeat
     depends_on:
       - elasticsearch
+      - logstash
     entrypoint: filebeat -e -strict.perms=false
     volumes:
-    - filebeat:/usr/share/filebeat/data
-    - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
-    - ../ads-microservice/log:/var/log/ads:ro
-    - ../auth-microservice/log:/var/log/auth:ro
-    - ../geocoder-microservice/log:/var/log/geocoder:ro
+      - filebeat:/usr/share/filebeat/data
+      - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - ../ads-microservice/log:/var/log/ads:ro
+      - ../auth-microservice/log:/var/log/auth:ro
+      - ../geocoder-microservice/log:/var/log/geocoder:ro
+
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch-oss:7.8.0
     container_name: elascticsearch
     volumes:
-    - elasticsearch:/usr/share/elasticsearch/data
-    - ./elasticsearch/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+      - elasticsearch:/usr/share/elasticsearch/data
+      - ./elasticsearch/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+
   kibana:
     image: docker.elastic.co/kibana/kibana-oss:7.8.0
     container_name: kibana
@@ -36,9 +52,10 @@ services:
     environment:
       ELASTICSEARCH_HOSTS: http://elasticsearch:9200
     ports:
-    - 5601:5601
+      - 5601:5601
 
 volumes:
   rabbitmq:
+  logstash:
   filebeat:
   elasticsearch:

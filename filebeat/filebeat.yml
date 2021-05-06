@@ -12,5 +12,11 @@ setup:
   kibana:
     host: "http://kibana:5601"
 output:
-  elasticsearch:
-    hosts: ["http://elasticsearch:9200"]
+  logstash:
+    enabled: true
+    hosts:
+      - logstash:5044
+#output:
+#  elasticsearch:
+#    hosts: ["http://elasticsearch:9200"]
+#    bulk_max_size: 1
